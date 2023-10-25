@@ -1,6 +1,5 @@
 import datetime
 
-# from django.contrib.auth.models import User
 from wagtail.test.utils import WagtailPageTestCase
 from wagtail.test.utils.form_data import nested_form_data, inline_formset, rich_text
 from .models import PollsIndexPage, PollsPage, Author
