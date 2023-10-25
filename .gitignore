@@ -1,0 +1,6 @@
+.python-version
+.venv
+.coverage
+__pycache__
+db.sqlite3
+media
