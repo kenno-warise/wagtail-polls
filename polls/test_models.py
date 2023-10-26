@@ -135,8 +135,8 @@ class PollsIndexPageTests(WagtailPageTestCase):
         """目的のビューにインスタンスが出力されるか"""
 
         res = self.client.get("/polls/")
-        query = Page.objects.order_by('-first_published_at').first()
-        self.assertQuerysetEqual(res.context["pollspages"], [query])
+        query = Page.objects.type(PollsPage).live().order_by('-first_published_at')
+        self.assertQuerysetEqual(res.context["pollspages"], query)
 
 
 class PollsPageTests(WagtailPageTestCase):
