@@ -160,14 +160,17 @@ class PollsPageTests(WagtailPageTestCase):
     def test_choice_exception(self):
         """質問事項を選択せずに投票したあとのアサート"""
 
-        url = self.pollspage.url + 'vote/'
+        url = self.pollspage.url + self.pollspage.reverse_subpage('vote')
         res = self.client.post(url)
-        self.assertQuerysetEqual(res.context['error_message'], "You didn't select a choice.")
+        self.assertQuerysetEqual(
+                res.context['error_message'],
+                "You didn't select a choice."
+        )
     
     def test_choice_redirect(self):
         """質問事項を選択して投票したあとのアサート"""
         
-        url = self.pollspage.url + 'vote/'
+        url = self.pollspage.url + self.pollspage.reverse_subpage('vote')
         redirect_url = self.pollspage.url + 'result/'
         res = self.client.post(url, {'choice': 1})
         self.assertRedirects(res, redirect_url)
