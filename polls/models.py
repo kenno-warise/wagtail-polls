@@ -1,6 +1,7 @@
 from django import forms
 from django.db import models
 from django.http import HttpResponseRedirect
+from django.utils import timezone
 
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
@@ -24,7 +25,18 @@ class PollsIndexPage(Page):
 
     def get_context(self, request):
         context = super().get_context(request)
-        pollspages = self.get_children().live().order_by('-first_published_at')
+        
+        # filter(date__lte=timezone.now())で絞りたいけどPageobjにはdate引数が無いので条件分岐
+        pollspage_query = self.get_children().specific()
+        for query in pollspage_query:
+            if timezone.now().date() < query.date or not query.questions.all():
+                query.live = False
+                query.save()
+            else:
+                query.live = True
+                query.save()
+            
+        pollspages = pollspage_query.live().order_by('-id')[:5]
         context['pollspages'] = pollspages
         return context
 
