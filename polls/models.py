@@ -24,19 +24,18 @@ class PollsIndexPage(Page):
     ]
 
     def get_context(self, request):
+        """本日から過去の要素とchoice_textの要素が存在するか絞り込む"""
+
         context = super().get_context(request)
+
+        if request.user.is_authenticated:
+            pollspages = self.get_children().all().order_by('-id')
+        else:
+            pollspages = self.get_children().live().filter(
+                    pollspage__date__lte=timezone.now(),
+                    pollspage__questions__choice_text__isnull=False
+            ).distinct().order_by('-id')[:5]
         
-        # filter(date__lte=timezone.now())で絞りたいけどPageobjにはdate引数が無いので条件分岐
-        pollspage_query = self.get_children().specific()
-        for query in pollspage_query:
-            if timezone.now().date() < query.date or not query.questions.all():
-                query.live = False
-                query.save()
-            else:
-                query.live = True
-                query.save()
-            
-        pollspages = pollspage_query.live().order_by('-id')[:5]
         context['pollspages'] = pollspages
         return context
 
@@ -70,7 +69,7 @@ class PollsPage(RoutablePageMixin, Page):
                     'polls/polls_page.html',
                     context_overrides=context,
             )
-
+            
         # voteフィールドに整数１を加算して保存
         selected_choice.vote += 1
         selected_choice.save()

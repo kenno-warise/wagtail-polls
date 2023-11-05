@@ -1,5 +1,6 @@
 import datetime
 
+from django.utils import timezone
 from wagtail.test.utils import WagtailPageTestCase
 from wagtail.test.utils.form_data import nested_form_data, inline_formset, rich_text
 from .models import PollsIndexPage, PollsPage, Author
@@ -135,7 +136,18 @@ class PollsIndexPageTests(WagtailPageTestCase):
         """目的のビューにインスタンスが出力されるか"""
 
         res = self.client.get("/polls/")
-        query = Page.objects.type(PollsPage).specific().live().order_by('-first_published_at')
+        query = Page.objects.type(PollsPage).live().filter(
+                pollspage__date__lte=timezone.now(),
+                pollspage__questions__choice_text__isnull=False
+        ).distinct().order_by('-id')[:5]
+        self.assertQuerysetEqual(res.context["pollspages"], query)
+
+    def test_pollsindexpage_view_authenticated(self):
+        """認証されたユーザーで目的のビューを表示するか"""
+
+        self.login()
+        res = self.client.get("/polls/")
+        query = Page.objects.type(PollsPage).all().order_by('-id')
         self.assertQuerysetEqual(res.context["pollspages"], query)
 
 
