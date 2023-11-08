@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
+from wagtail.admin.forms import WagtailAdminPageForm
 from wagtail.models import Page, Orderable
 from wagtail.fields import RichTextField
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
@@ -25,7 +26,7 @@ class PollsIndexPage(Page):
 
     def get_context(self, request):
         """本日から過去の要素とchoice_textの要素が存在するか絞り込む"""
-
+        
         context = super().get_context(request)
 
         if request.user.is_authenticated:
@@ -40,12 +41,28 @@ class PollsIndexPage(Page):
         return context
 
 
+# PollsPage管理ページのカスタマイズ
+class PollsPageForm(WagtailAdminPageForm):
+
+    def clean(self):
+        cleaned_data = super().clean()
+        date = cleaned_data['date']
+        # 未来の日付且つ公開として保存しようとした場合にエラーを発生させる
+        if date > timezone.now().date() and 'action-publish' in self.data:
+            self.add_error('date', '未来の日付で保存する場合は非公開にする必要があります!!')
+        
+        # add_errorできるのはcleaned_dataに含まれているキーのみ
+        # 従って、choice_textフィールドを変更する
+        # elif 'questions-1-choice_text' not in self.data:
+        #     self.add_error('questions-TOTAL_FORMS', '２つ以上の「Choice text」が必要です')
+        return cleaned_data
+
+
 # Wagtailモデル
 class PollsPage(RoutablePageMixin, Page):
     date = models.DateField("Post date")
     authors = ParentalManyToManyField('polls.Author', blank=True)
     parent_page_types = ['polls.PollsIndexPage']
-
     content_panels = Page.content_panels + [
             # 日付と作成者をグループ化して読みやすくする
             MultiFieldPanel([
@@ -55,6 +72,7 @@ class PollsPage(RoutablePageMixin, Page):
             FieldPanel('date'),
             InlinePanel('questions', label="Questions"),
     ]
+    base_form_class = PollsPageForm
 
     @path('vote/')
     def vote(self, request):
@@ -86,9 +104,9 @@ class PollsPage(RoutablePageMixin, Page):
     
     class Meta:
         # 作成するページのタイプを選択する際の表示名を定義
-        verbose_name = "投票する"
-
+        verbose_name = "質問の追加"
     
+
 class PollsPageChoice(Orderable):
     """PollsPageモデルの子モデル"""
 
