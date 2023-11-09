@@ -46,21 +46,17 @@ class PollsPageForm(WagtailAdminPageForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        date = cleaned_data['date']
-        # 未来の日付且つ公開として保存しようとした場合にエラーを発生させる
-        if date > timezone.now().date() and 'action-publish' in self.data:
-            self.add_error('date', '未来の日付で保存する場合は非公開にする必要があります!!')
-        
-        # add_errorできるのはcleaned_dataに含まれているキーのみ
-        # 従って、choice_textフィールドを変更する
-        # elif 'questions-1-choice_text' not in self.data:
-        #     self.add_error('questions-TOTAL_FORMS', '２つ以上の「Choice text」が必要です')
+        if 'date' in cleaned_data:
+            date = cleaned_data['date']
+            # 未来の日付且つ公開として保存しようとした場合にエラーを発生させる
+            if date > timezone.now().date() and 'action-publish' in self.data:
+                self.add_error('date', '未来の日付で保存する場合は非公開にする必要があります!!')
         return cleaned_data
 
 
 # Wagtailモデル
 class PollsPage(RoutablePageMixin, Page):
-    date = models.DateField("Post date")
+    date = models.DateField("Post date", blank=False)
     authors = ParentalManyToManyField('polls.Author', blank=True)
     parent_page_types = ['polls.PollsIndexPage']
     content_panels = Page.content_panels + [
@@ -70,7 +66,7 @@ class PollsPage(RoutablePageMixin, Page):
                 FieldPanel('authors', widget=forms.CheckboxSelectMultiple),
             ], heading="Polls information"),
             FieldPanel('date'),
-            InlinePanel('questions', label="Questions"),
+            InlinePanel('questions', label="Questions", min_num=2),
     ]
     base_form_class = PollsPageForm
 
@@ -113,7 +109,7 @@ class PollsPageChoice(Orderable):
     # related_nameはモデル名の代わりに使用する名前（関連モデル.questions.choice_textのような）。
     question = ParentalKey(PollsPage, on_delete=models.CASCADE, related_name='questions')
     # question = models.ForeignKey(PollsPage, on_delete=models.CASCADE, related_name='questions')
-    choice_text = models.CharField(blank=True, max_length=250)
+    choice_text = models.CharField(blank=False, max_length=250)
     vote = models.IntegerField(default=0)
 
     panels = [
