@@ -30,7 +30,7 @@ class PollsIndexPage(Page):
         context = super().get_context(request)
 
         if request.user.is_authenticated:
-            pollspages = self.get_children().all().order_by('-id')
+            pollspages = self.get_children().live().order_by('-id')
         else:
             pollspages = self.get_children().live().filter(
                     pollspage__date__lte=timezone.now(),
