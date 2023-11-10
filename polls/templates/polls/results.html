@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ page.title }}</h1>
+<ul>
+  {% for choice in page.choices.all %}
+    <li>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes | pluralize }}</li>
+  {% endfor %}
+</ul>
+
+<a href="{{ page.url }}">Vote again?</a>
+{% endblock %}
