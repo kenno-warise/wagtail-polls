@@ -48,60 +48,22 @@ $ pip install --upgrade pip
 $ pip install hatch keyrings.alt
 ```
 
-リポジトリを落として「django-on-hatch」ディレクトリに入ります。
+リポジトリを落として「wagtail-polls」ディレクトリに入ります。
 
 ```console
-$ git clone https://github.com/kenno-warise/django-on-hatch.git
+$ git clone https://github.com/kenno-warise/wagtail-polls.git
 
-$ cd django-on-hatch
+$ cd wagtail-polls
 ```
 
-## 設定（開発＆テスト）
-
-Hatchが配置する仮想環境のディレクトリを決める。
-
-デフォルト設定で配置されるディレクトリは以下のコマンドで参照できる。
+hatchコマンドでデータベースの作成・スーパーユーザーの作成・サーバーの起動を行います。
 
 ```console
-$ hatch config show | grep 'data'
-data = "/home/user/.local/share/hatch"
-```
+$ hatch run makemigrations polls && hatch run migrate
 
-デフォルト値を変更する場合は以下のコマンドを実行する。
+$ hatch run createsuperuser
 
-```console
-$ hatch config set dirs.data 配置するディレクトリ
-```
-
-Djangoのバージョンを指定したい場合は以下を編集してください。
-
-`requirements.txt`
-
-```
-django==2.2.5
-```
-
-Djangoプロジェクトを作成
-
-```console
-$ hatch run django-admin startproject myproject .
-```
-
-言語を設定します。
-
-`myproject/settings.py`
-
-```python
-# Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-
-LANGUAGE_CODE = 'ja'
-
-TIME_ZONE = 'Asia/Tokyo'
-
-USE_I18N = True
-
-USE_TZ = True
+$ hatch run runserver
 ```
 
 ショートカットとしてHatchの「run」コマンドで実行できるDjangoのコマンドは`pyproject.toml`の「tool.hatch.envs.default.scripts」テーブルによって登録しています。
@@ -119,40 +81,7 @@ cov = "coverage run --include=app/* --omit=app/test*,app/__init__.py,app/migrati
 cov-report = "coverage report -m"
 ```
 
-データベースを作成する場合はマイグレートを実行します。
-
-```consolw
-$ hatch run migrate
-```
-
-Djangoを起動します。
-
-```console
-$ hatch run runserver
-```
-
-## Djangoプロジェクトに設定（開発）
-
-Djangoアプリを作成
-
-```console
-$ hatch run startapp app_2
-```
-
-バージョン情報の設定
-
-`pyproject.toml`
-
-```toml
-[tool.hatch.version]
-path = "app_2/__init__.py"
-```
-
-`app_2/__init__.py`
-
-```python
-__version__ = "0.0.1"
-```
+## アップロード
 
 Hatchの「version」コマンドでDjangoアプリのバージョン情報を確認できます。
 
