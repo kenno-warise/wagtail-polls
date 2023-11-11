@@ -22,7 +22,8 @@ class Polls(Page):
             FieldPanel('intro'),
     ]
     # 親ページタイプの制御
-    parent_page_types = ['wagtailcore.Page']
+    parent_page_types = ['home.HomePage']
+    # parent_page_types = ['wagtailcore.Page']
     # 子ページタイプの制御
     subpage_types = ['polls.Question']
     # 独自のテンプレートファイルの設定
