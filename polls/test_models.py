@@ -1,35 +1,41 @@
 import datetime
 
+from django.conf import settings
 from django.utils import timezone
 from wagtail.test.utils import WagtailPageTestCase
 from wagtail.test.utils.form_data import nested_form_data, inline_formset, rich_text
-from .models import Polls, Question, Author
 from wagtail.models import Page
+
+from home.models import HomePage
+from .models import Polls, Question, Author
 
 
 class WagtailPagesTests(WagtailPageTestCase):
 
     @classmethod
     def setUpTestData(cls):
-
+        print('DEBUG'+' =', settings.DEBUG)
         # 各種親子関係のインスタンスを作成
-        cls.page = Page.objects.get(title="Welcome to your new Wagtail site!")
+        cls.home = HomePage.objects.get(title="Home")
         cls.polls = Polls(title="Polls")
         cls.question = Question(title="test", pub_date=datetime.datetime.now())
         cls.question.choices.create(choice_text="Past choice 1.", votes=0)
+        cls.question.choices.create(choice_text="Past choice 2.", votes=0)
 
         # 親モデルから子モデルを追加
-        cls.page.add_child(instance=cls.polls)
+        cls.home.add_child(instance=cls.polls)
         cls.polls.add_child(instance=cls.question)
 
         # 各子モデルのインスタンスを保存して公開
+        # cls.polls.save()
+        # cls.question.save()
         cls.polls.save_revision().publish()
         cls.question.save_revision().publish()
-
+    
     def test_page_routing(self):
         """各インスタンスのページにルーティング（特定のURLにアクセス）した時、404が表示されない事をアサート"""
 
-        self.assertPageIsRoutable(self.page, msg="Pageのテスト")
+        self.assertPageIsRoutable(self.home, msg="HomePageのテスト")
         self.assertPageIsRoutable(self.polls, msg="Pollsのテスト")
         self.assertPageIsRoutable(self.question, msg="Questionのテスト")
         self.assertPageIsRoutable(self.question, route_path="vote/", msg="Questionのテスト")
@@ -47,7 +53,7 @@ class WagtailPagesTests(WagtailPageTestCase):
         self.assertPageIsEditable(
                 self.polls,
                 post_data=nested_form_data({
-                    'title': 'Polls2',
+                    'title': 'Polls',
                     'intro': rich_text('Question!!'),
                 })
         )
@@ -58,22 +64,21 @@ class WagtailPagesTests(WagtailPageTestCase):
         このアサーションはモデルのpreview_modesをオーバーライドし、
         さまざまなプレビューモードを使用しているページに有効。"""
 
-        # AssertionError: {'is_valid': False, 'is_available': False} != {'is_valid': True, 'is_available': True}
-        # self.assertPageIsPreviewable(self.page)
-        # self.assertPageIsPreviewable(self.polls)
-        # self.assertPageIsPreviewable(self.question)
+        self.assertPageIsPreviewable(self.home)
+        self.assertPageIsPreviewable(self.polls)
+        self.assertPageIsPreviewable(self.question)
 
     def test_can_create_under_page(self):
         """親ページの下に作成できる子ページのアサート。
         似ているアサーションでassertAllowedParentPageTypesがある。"""
 
-        self.assertCanCreateAt(Page, Polls)
+        self.assertCanCreateAt(HomePage, Polls)
         self.assertCanCreateAt(Polls, Question)
 
     def test_can_not_create_under_page(self):
         """親ページの下に作成できない子ページのアサート"""
 
-        self.assertCanNotCreateAt(Page, Question)
+        self.assertCanNotCreateAt(HomePage, Question)
         self.assertCanNotCreateAt(Question, Polls)
 
     def test_can_create_content_page(self):
@@ -82,7 +87,7 @@ class WagtailPagesTests(WagtailPageTestCase):
         self.login()
 
         self.assertCanCreate(
-                parent=self.page,
+                parent=self.home,
                 child_model=Polls,
                 data=nested_form_data({
                     'title': 'Polls2',
@@ -98,8 +103,10 @@ class WagtailPagesTests(WagtailPageTestCase):
         #             'pub_date': timezone.now().date(),
         #             'choices': inline_formset([
         #                 {'choice_text': '選択１'},
+        #                 {'votes': 0},
         #                 {'choice_text': '選択２'},
-        #             ], min=2, max=0)
+        #                 {'votes': 0},
+        #             ], min=2)
         #         })
         # )
     
@@ -107,7 +114,7 @@ class WagtailPagesTests(WagtailPageTestCase):
         """ある子ページを作成できるページタイプが特定の親ページのみであることをテストします。
         モデルであるページタイプのフィールドparent_page_types属性に親ページを設定している場合に有効なテスト。"""
 
-        self.assertAllowedParentPageTypes(Polls, {Page})
+        self.assertAllowedParentPageTypes(Polls, {HomePage})
         self.assertAllowedParentPageTypes(Question, {Polls})
 
     def test_content_page_subpages(self):
@@ -122,16 +129,19 @@ class PollsTests(WagtailPageTestCase):
     @classmethod
     def setUpTestData(cls):
         # 各種親子関係のインスタンスを作成
-        cls.page = Page.objects.get(title="Welcome to your new Wagtail site!")
+        cls.home = HomePage.objects.get(title="Home")
         cls.polls = Polls(title="Polls")
         cls.question = Question(title="test", pub_date=datetime.datetime.now())
         cls.question.choices.create(choice_text="Past choice 1.", votes=0)
+        cls.question.choices.create(choice_text="Past choice 2.", votes=0)
 
         # 親モデルから子モデルを追加
-        cls.page.add_child(instance=cls.polls)
+        cls.home.add_child(instance=cls.polls)
         cls.polls.add_child(instance=cls.question)
 
         # 各子モデルのインスタンスを保存して公開
+        # cls.polls.save()
+        # cls.question.save()
         cls.polls.save_revision().publish()
         cls.question.save_revision().publish()
 
@@ -159,18 +169,21 @@ class QuestionTests(WagtailPageTestCase):
     @classmethod
     def setUpTestData(cls):
         # 各種親子関係のインスタンスを作成
-        cls.page = Page.objects.get(title="Welcome to your new Wagtail site!")
+        cls.home = HomePage.objects.get(title="Home")
         cls.polls = Polls(title="Polls")
         cls.question = Question(title="test", pub_date=datetime.datetime.now())
         cls.question.choices.create(choice_text="Past choice 1.", votes=0)
+        cls.question.choices.create(choice_text="Past choice 2.", votes=0)
 
         # 親モデルから子モデルを追加
-        cls.page.add_child(instance=cls.polls)
+        cls.home.add_child(instance=cls.polls)
         cls.polls.add_child(instance=cls.question)
 
         # 各子モデルのインスタンスを保存して公開
-        cls.polls.save_revision().publish()
-        cls.question.save_revision().publish()
+        cls.polls.save()
+        cls.question.save()
+        # cls.polls.save_revision().publish()
+        # cls.question.save_revision().publish()
 
     def test_choice_exception(self):
         """質問事項を選択せずに投票したあとのアサート"""

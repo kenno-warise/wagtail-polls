@@ -1,6 +1,7 @@
 .venv
-db.sqlite3
+.python-version
 __pycache__
+db.sqlite3
 migrations/*
 dist
-.python-version
+static
