@@ -47,8 +47,8 @@ class WagtailPagesTests(WagtailPageTestCase):
         self.assertPageIsRenderable(self.question)
         self.assertPageIsRenderable(self.question, route_path="vote/", post_data={"choice": 1}, accept_redirect=True)
 
-    def test_editability(self):
-        """致命的なエラーを発生させることなく、ページ編集ビューがページに対して機能することをアサートします。"""
+    def test_polls_admin_page_editability(self):
+        """致命的なエラーを発生させることなく、Polls管理ページ編集ビューがページに対して機能することをアサートします。"""
 
         self.assertPageIsEditable(
                 self.polls,
@@ -58,6 +58,21 @@ class WagtailPagesTests(WagtailPageTestCase):
                 })
         )
 
+    def test_questioin_admin_page_editability(self):
+        """致命的なエラーを発生させることなく、Question管理ページ編集ビューがページに対して機能することをアサートします。"""
+
+        self.assertPageIsEditable(
+                self.question,
+                post_data=nested_form_data({
+                    'title': 'test 2',
+                    'pub_date': timezone.now().date(),
+                    'choices': inline_formset([
+                        {'choice_text': 'choice 1', 'votes': 0},
+                        {'choice_text': 'choice 2', 'votes': 0},
+                    ])
+                })
+        )
+    
     def test_general_previewability(self):
         """致命的なエラーを発生させることなく、
         ページのプレビュービューをページにロードできることをアサートします。
@@ -81,34 +96,31 @@ class WagtailPagesTests(WagtailPageTestCase):
         self.assertCanNotCreateAt(HomePage, Question)
         self.assertCanNotCreateAt(Question, Polls)
 
-    def test_can_create_content_page(self):
-        """管理画面内において指定されたポストデータで、指定された子のページを親の下で作成できるかアサート"""
+    def test_can_create_content_polls(self):
+        """管理画面内において指定されたポストデータで、Pollsページを親の下で作成できるかアサート"""
 
         self.login()
 
-        self.assertCanCreate(
-                parent=self.home,
-                child_model=Polls,
-                data=nested_form_data({
-                    'title': 'Polls2',
-                    'intro': rich_text('Question!!'),
-                })
-        )
-        # AssertionError: Creating a page failed for an unknown reason
-        # self.assertCanCreate(
-        #         parent=self.polls,
-        #         child_model=Question,
-        #         data=nested_form_data({
-        #             'title': 'テスト２',
-        #             'pub_date': timezone.now().date(),
-        #             'choices': inline_formset([
-        #                 {'choice_text': '選択１'},
-        #                 {'votes': 0},
-        #                 {'choice_text': '選択２'},
-        #                 {'votes': 0},
-        #             ], min=2)
-        #         })
-        # )
+        form_data = nested_form_data({
+            'title': 'Polls2',
+            'intro': rich_text('Question!!'),
+            })
+        self.assertCanCreate(parent=self.home, child_model=Polls, data=form_data)
+
+    def test_can_create_content_question(self):
+        """管理画面内において指定されたポストデータで、Questionページを親の下で作成できるかアサート"""
+        
+        self.login()
+   
+        form_data = nested_form_data({
+            'title': 'テスト２',
+            'pub_date': timezone.now().date(),
+            'choices': inline_formset([
+                {'choice_text': '選択１', 'votes': 0},
+                {'choice_text': '選択２', 'votes': 0},
+                ], min=2)
+        })
+        self.assertCanCreate(parent=self.polls, child_model=Question, data=form_data)
     
     def test_content_page_parent_pages(self):
         """ある子ページを作成できるページタイプが特定の親ページのみであることをテストします。
@@ -185,6 +197,31 @@ class QuestionTests(WagtailPageTestCase):
         # cls.polls.save_revision().publish()
         # cls.question.save_revision().publish()
 
+    def test_question_admin_post_data(self):
+
+        with self.assertRaises(ValueError):
+            self.login()
+   
+            form_data = nested_form_data({
+                'title': 'テスト２',
+                'pub_date': (timezone.now() + timezone.timedelta(days=2)).date(),
+                'choices': inline_formset([
+                    {'choice_text': '選択１', 'votes': 0},
+                    {'choice_text': '選択２', 'votes': 0},
+                    ], min=2)
+            })
+            self.client.login(username='kenno', password='warise')
+            # data = {'title': 'test5', 'pub_date': timezone.now().date()}
+            # data = {'title': 'test5', 'pub_date': (timezone.now() + timezone.timedelta(days=2)).date()}
+            res = self.client.post('admin/pages/add/polls/question/1/', form_data)
+            print(res)
+            # self.assertCanCreate(parent=self.polls, child_model=Question, data=form_data)
+            # question = Question(title='test 3', pub_date=(timezone.now() + timezone.timedelta(days=2)).date())
+            # question.choices.create(choice_text='choice 1', votes=0)
+            # question.choices.create(choice_text='choice 2', votes=0)
+            # self.polls.add_child(instance=question)
+            # question.save()
+    
     def test_choice_exception(self):
         """質問事項を選択せずに投票したあとのアサート"""
 

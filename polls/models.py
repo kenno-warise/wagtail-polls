@@ -120,7 +120,7 @@ class Choice(Orderable):
     # related_nameはモデル名の代わりに使用する名前（関連モデル.choices.choice_textのような）。
     # question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
     question = ParentalKey(Question, on_delete=models.CASCADE, related_name='choices')
-    choice_text = models.CharField(blank=False, max_length=250)
+    choice_text = models.CharField(blank=True, max_length=250)
     votes = models.IntegerField(default=0)
 
     panels = [
