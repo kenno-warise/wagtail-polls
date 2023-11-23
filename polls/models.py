@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
-from wagtail.admin.forms import WagtailAdminPageForm
+from wagtail.admin.forms import WagtailAdminPageForm, WagtailAdminModelForm
 from wagtail.models import Page, Orderable
 from wagtail.fields import RichTextField
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel

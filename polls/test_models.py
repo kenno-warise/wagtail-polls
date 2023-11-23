@@ -1,6 +1,6 @@
 import datetime
 
-from django.conf import settings
+from django.urls import reverse
 from django.utils import timezone
 from wagtail.test.utils import WagtailPageTestCase
 from wagtail.test.utils.form_data import nested_form_data, inline_formset, rich_text
@@ -14,7 +14,6 @@ class WagtailPagesTests(WagtailPageTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        print('DEBUG'+' =', settings.DEBUG)
         # 各種親子関係のインスタンスを作成
         cls.home = HomePage.objects.get(title="Home")
         cls.polls = Polls(title="Polls")
@@ -198,29 +197,27 @@ class QuestionTests(WagtailPageTestCase):
         # cls.question.save_revision().publish()
 
     def test_question_admin_post_data(self):
+        """questionの作成で未来の日付に対して公開ページで作成した際のアサート"""
 
-        with self.assertRaises(ValueError):
-            self.login()
-   
-            form_data = nested_form_data({
-                'title': 'テスト２',
-                'pub_date': (timezone.now() + timezone.timedelta(days=2)).date(),
-                'choices': inline_formset([
-                    {'choice_text': '選択１', 'votes': 0},
-                    {'choice_text': '選択２', 'votes': 0},
-                    ], min=2)
-            })
-            self.client.login(username='kenno', password='warise')
-            # data = {'title': 'test5', 'pub_date': timezone.now().date()}
-            # data = {'title': 'test5', 'pub_date': (timezone.now() + timezone.timedelta(days=2)).date()}
-            res = self.client.post('admin/pages/add/polls/question/1/', form_data)
-            print(res)
-            # self.assertCanCreate(parent=self.polls, child_model=Question, data=form_data)
-            # question = Question(title='test 3', pub_date=(timezone.now() + timezone.timedelta(days=2)).date())
-            # question.choices.create(choice_text='choice 1', votes=0)
-            # question.choices.create(choice_text='choice 2', votes=0)
-            # self.polls.add_child(instance=question)
-            # question.save()
+        self.login()
+        data = nested_form_data({
+            'title': 'test2',
+            'pub_date': (timezone.now() + timezone.timedelta(days=2)).date(),
+            'choices': inline_formset([
+                {'choice_text': '選択１', 'votes': 0},
+                {'choice_text': '選択２', 'votes': 0},
+                ], min=2),
+            'slug': 'test2',
+            'action-publish': 'action-publish'
+        })
+        url = reverse('wagtailadmin_pages:add', args=[self.polls.slug, 'question', self.polls.pk])
+        res = self.client.post(url, data, follow=True)
+        if res.redirect_chain == []:
+            print('redicrect_chainが空だった場合は[form]キーがある')
+        else:
+            print('redirect_chain-----')
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, '未来の日付で保存する場合は非公開にする必要があります!!')
     
     def test_choice_exception(self):
         """質問事項を選択せずに投票したあとのアサート"""
