@@ -1,15 +1,16 @@
-from django import forms
-from django.db import models
-from django.http import HttpResponseRedirect
-from django.utils import timezone
+from typing import ClassVar, List
 
-from modelcluster.fields import ParentalKey, ParentalManyToManyField
-from wagtail.contrib.routable_page.models import RoutablePageMixin, path
-from wagtail.admin.forms import WagtailAdminPageForm, WagtailAdminModelForm
-from wagtail.models import Page, Orderable
-from wagtail.fields import RichTextField
-from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
-from wagtail.snippets.models import register_snippet
+from django import forms  # type: ignore
+from django.db import models  # type: ignore
+from django.http import HttpResponseRedirect  # type: ignore
+from django.utils import timezone  # type: ignore
+from modelcluster.fields import ParentalKey, ParentalManyToManyField  # type: ignore
+from wagtail.admin.forms import WagtailAdminPageForm  # type: ignore
+from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel  # type: ignore
+from wagtail.contrib.routable_page.models import RoutablePageMixin, path  # type: ignore
+from wagtail.fields import RichTextField  # type: ignore
+from wagtail.models import Orderable, Page  # type: ignore
+from wagtail.snippets.models import register_snippet  # type: ignore
 
 
 class Polls(Page):
@@ -18,31 +19,31 @@ class Polls(Page):
     intro = RichTextField(blank=True)
 
     # 管理ページにフィールドのフォームを設定する
-    content_panels = Page.content_panels + [
-            FieldPanel('intro'),
-    ]
+    content_panels: ClassVar[List[str]] = [Page.content_panels, FieldPanel("intro")]
     # 親ページタイプの制御
-    parent_page_types = ['home.HomePage']
+    parent_page_types: ClassVar[List[str]] = ["home.HomePage"]
     # parent_page_types = ['wagtailcore.Page']
     # 子ページタイプの制御
-    subpage_types = ['polls.Question']
+    subpage_types: ClassVar[List[str]] = ["polls.Question"]
     # 独自のテンプレートファイルの設定
-    template = 'polls/index.html'
+    template = "polls/index.html"
 
     def get_context(self, request):
         """本日から過去の要素とchoice_textの要素が存在するか絞り込む"""
-        
+
         context = super().get_context(request)
 
         if request.user.is_authenticated:
-            pollspages = self.get_children().live().order_by('-id')
+            pollspages = self.get_children().live().order_by("-id")
         else:
-            pollspages = self.get_children().live().filter(
-                    question__pub_date__lte=timezone.now(),
-                    question__choices__choice_text__isnull=False
-            ).distinct().order_by('-id')[:5]
-        
-        context['pollspages'] = pollspages
+            pollspages = (
+                self.get_children()
+                .live()
+                .filter(question__pub_date__lte=timezone.now(), question__choices__choice_text__isnull=False)
+                .distinct()
+                .order_by("-id")[:5]
+            )
+        context["pollspages"] = pollspages
         return context
 
 
@@ -52,81 +53,85 @@ class QuestionForm(WagtailAdminPageForm):
     def clean(self):
         """フォームに入力されたデータの検査"""
         cleaned_data = super().clean()
-        if 'pub_date' in cleaned_data:
-            date = cleaned_data['pub_date']
+        if "pub_date" in cleaned_data:
+            date = cleaned_data["pub_date"]
             # 未来の日付且つ公開として保存しようとした場合にエラーを発生させる
-            if date > timezone.now().date() and 'action-publish' in self.data:
-                self.add_error('pub_date', '未来の日付で保存する場合は非公開にする必要があります!!')
+            if date > timezone.now().date() and "action-publish" in self.data:
+                self.add_error("pub_date", "未来の日付で保存する場合は非公開にする必要があります!!")
         return cleaned_data
 
 
 class Question(RoutablePageMixin, Page):
     pub_date = models.DateField("Post date", blank=False)
-    authors = ParentalManyToManyField('polls.Author', blank=True)
-    content_panels = Page.content_panels + [
-            # 日付と作成者をグループ化して読みやすくする
-            MultiFieldPanel([
+    authors = ParentalManyToManyField("polls.Author", blank=True)
+    content_panels: ClassVar[List[str]] = [
+        Page.content_panels,
+        # 日付と作成者をグループ化して読みやすくする
+        MultiFieldPanel(
+            [
                 # 作成者フィールドをチェックボックスのウィジェットにする
-                FieldPanel('authors', widget=forms.CheckboxSelectMultiple),
-            ], heading="Polls information"),
-            FieldPanel('pub_date'),
-            InlinePanel('choices', label="Choices", min_num=2),
+                FieldPanel("authors", widget=forms.CheckboxSelectMultiple),
+            ],
+            heading="Polls information",
+        ),
+        FieldPanel("pub_date"),
+        InlinePanel("choices", label="Choices", min_num=2),
     ]
-    parent_page_types = ['polls.Polls']
-    template = 'polls/detail.html'
+    parent_page_types: ClassVar[List[str]] = ["polls.Polls"]
+    template = "polls/detail.html"
     # カスタムフォームの設定
     base_form_class = QuestionForm
 
     # URLパターンの追加
-    @path('vote/')
+    @path("vote/")
     def vote(self, request):
         """質問を選択して送信した後の処理のテスト"""
-        
+
         try:
-            selected_choice = self.choices.get(id=request.POST['choice'])
-        except KeyError: # choiceキーが取得できなければエラーを表示してやり直す
+            selected_choice = self.choices.get(id=request.POST["choice"])
+        except KeyError:  # choiceキーが取得できなければエラーを表示してやり直す
             context = super().get_context(request)
-            context['error_message'] = "You didn't select a choice."
+            context["error_message"] = "You didn't select a choice."
             return self.render(
-                    request,
-                    'polls/detail.html',
-                    context_overrides=context,
+                request,
+                "polls/detail.html",
+                context_overrides=context,
             )
-            
-        # votesフィールドに整数１を加算して保存
+
+        # votesフィールドに整数1を加算して保存
         selected_choice.votes += 1
         selected_choice.save()
         # 「/polls/slug/results/」を生成して変数に格納
-        url = self.url + self.reverse_subpage('results')
+        url = self.url + self.reverse_subpage("results")
         return HttpResponseRedirect(url)
-    
-    @path('results/')
+
+    @path("results/")
     def results(self, request):
         """投票結果が表示するページ"""
 
         return self.render(
-                request,
-                template='polls/results.html',
+            request,
+            template="polls/results.html",
         )
-    
+
     class Meta:
         # 作成するページのタイプを選択する際の表示名を定義
         verbose_name = "Choice text"
-    
+
 
 class Choice(Orderable):
     """Questionモデルの子モデル"""
 
-    # related_nameはモデル名の代わりに使用する名前（関連モデル.choices.choice_textのような）。
+    # related_nameはモデル名の代わりに使用する名前(関連モデル.choices.choice_textのような)。
     # question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
-    question = ParentalKey(Question, on_delete=models.CASCADE, related_name='choices')
+    question = ParentalKey(Question, on_delete=models.CASCADE, related_name="choices")
     choice_text = models.CharField(blank=True, max_length=250)
     votes = models.IntegerField(default=0)
 
-    panels = [
-            FieldPanel('choice_text'),
-            FieldPanel('votes'),
-      ]
+    panels: ClassVar[List[str]] = [
+        FieldPanel("choice_text"),
+        FieldPanel("votes"),
+    ]
 
 
 # Wagtailデコレーター
@@ -134,19 +139,17 @@ class Choice(Orderable):
 class Author(models.Model):
     name = models.CharField(max_length=255)
     author_image = models.ForeignKey(
-            'wagtailimages.Image', null=True, blank=True,
-            on_delete=models.SET_NULL, related_name='+'
+        "wagtailimages.Image", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
 
     # スニペットではスラッグや公開日などのフィールドが要らない為context_panelsではなくpanelsにしている
-    panels = [
-            FieldPanel('name'),
-            FieldPanel('author_image'),
+    panels: ClassVar[List[str]] = [
+        FieldPanel("name"),
+        FieldPanel("author_image"),
     ]
 
     def __str__(self):
         return self.name
 
     class Meta:
-        verbose_name_plural = 'Authors'
-
+        verbose_name_plural = "Authors"

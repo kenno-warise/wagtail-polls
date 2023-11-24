@@ -1,8 +1,8 @@
-from django.db import models
+from django.db import models  # type:ignore
 
-from wagtail.models import Page
-from wagtail.fields import RichTextField
-from wagtail.admin.panels import FieldPanel
+from wagtail.models import Page  # type:ignore
+from wagtail.fields import RichTextField  # type:ignore
+from wagtail.admin.panels import FieldPanel  # type:ignore
 
 
 class HomePage(Page):
