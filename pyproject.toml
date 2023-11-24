@@ -43,14 +43,14 @@ dependencies = ["coverage"]
 # デフォルト環境のスクリプト
 # hatch run runserver
 [tool.hatch.envs.default.scripts]
-makemigrations = "python3 manage.py makemigrations {args}"
-migrate = "python3 manage.py migrate"
-createsuperuser = "python3 manage.py createsuperuser"
-runserver = "python3 manage.py runserver"
-startapp = "python3 manage.py startapp {args}"
-shell = "python3 manage.py shell"
-collectstatic = "python3 manage.py collectstatic"
-test = "python3 manage.py test {args}"
+makemigrations = "python3.7 manage.py makemigrations {args}"
+migrate = "python3.7 manage.py migrate"
+createsuperuser = "python3.7 manage.py createsuperuser"
+runserver = "python3.7 manage.py runserver"
+startapp = "python3.7 manage.py startapp {args}"
+shell = "python3.7 manage.py shell"
+collectstatic = "python3.7 manage.py collectstatic"
+test = "python3.7 manage.py test {args}"
 cov = "coverage run --include=polls/* --omit=polls/test*,polls/__init__.py,polls/migrations/* manage.py test {args}"
 cov-report = "coverage report -m"
 
