@@ -19,7 +19,8 @@ class Polls(Page):
     intro = RichTextField(blank=True)
 
     # 管理ページにフィールドのフォームを設定する
-    content_panels: ClassVar[List[str]] = [Page.content_panels, FieldPanel("intro")]
+    # リスト内の先頭でアスタリスクにしているのは、リスト変数からインスタンス変数に変換しているという意味
+    content_panels: ClassVar[List[str]] = [*Page.content_panels, FieldPanel("intro")]
     # 親ページタイプの制御
     parent_page_types: ClassVar[List[str]] = ["home.HomePage"]
     # parent_page_types = ['wagtailcore.Page']
@@ -65,7 +66,7 @@ class Question(RoutablePageMixin, Page):
     pub_date = models.DateField("Post date", blank=False)
     authors = ParentalManyToManyField("polls.Author", blank=True)
     content_panels: ClassVar[List[str]] = [
-        Page.content_panels,
+        *Page.content_panels,
         # 日付と作成者をグループ化して読みやすくする
         MultiFieldPanel(
             [
