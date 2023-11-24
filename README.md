@@ -1,4 +1,4 @@
-# django-on-hatch
+# warise-polls
 
 [![PyPI - Version](https://img.shields.io/pypi/v/django-hatch.svg)](https://pypi.org/project/django-hatch)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/django-hatch.svg)](https://pypi.org/project/django-hatch)
@@ -9,8 +9,7 @@
 
 - [詳細](#詳細)
 - [インストール](#インストール)
-- [設定（開発＆テスト）](#設定（開発＆テスト）)
-- [Djangoプロジェクトに設定（開発）](#Djangoプロジェクトに設定（開発）)
+- [アップロード](#アップロード)
 - [Djangoプロジェクトに設定（テスト）](#Djangoプロジェクトに設定（テスト）)
 - [License](#license)
 
@@ -77,7 +76,7 @@ runserver = "python3 manage.py runserver"
 startapp = "python3 manage.py startapp {args}"
 shell = "python3 manage.py shell"
 test = "python3 manage.py test {args}"
-cov = "coverage run --include=app/* --omit=app/test*,app/__init__.py,app/migrations manage.py test {args}"
+cov = "coverage run --include=polls/* --omit=polls/test*,polls/__init__.py,polls/migrations manage.py test {args}"
 cov-report = "coverage report -m"
 ```
 
@@ -96,8 +95,8 @@ DjangoアプリをパッケージングしてPyPIにアップロードする。
 
 ```toml
 [tool.hatch.build]
-include = ["app_2/*"] # templatesとstaticも含まれます。
-exclude = ["app_2/migrations/*"]
+include = ["polls/*"] # templatesとstaticも含まれます。
+exclude = ["polls/migrations/*"]
 ```
 
 上記以外にあれば追記します。
@@ -133,39 +132,29 @@ $ hatch publish
 ```python
 INSTALLED_APPS = [
     ...,
-    "pkg",
+    "polls",
+    "wagtail.contrib.routable_page",
 ]
 ```
 
-`myproject/urls.py`
-
-`pkg`の部分をDjangoアプリ名に当てはめます。
-
-```python
-...
-from django.urls import path, include
-
-urlpatterns = [
-    ...,
-    path('', include('pkg.urls')),
-]
-```
 
 `requirements.txt`
 
 `pkg`の部分をDjangoアプリ名に当てはめます。
 
 ```
-django==2.2.5
-pkg
+...
+warise-polls
 ```
 
 必要であればマイグレートとスーパーユーザーを作成します。
 
 ```console
-$ hatch run migrate
+$ python manage.py makemigrations polls
 
-$ hatch run createsuperuser
+$ python manage.py migrate
+
+$ python manage.py createsuperuser
 ```
 
 サーバーを起動します。
@@ -174,7 +163,6 @@ $ hatch run createsuperuser
 $ hatch run runserver
 ```
 
-
 ## License
 
-`django-on-hatch` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
+`warise-polls` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
